@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Roulette</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #111; color: #fff; }
+    .wheel-container { position: relative; margin: 40px auto; width: 200px; height: 200px; border: 5px solid #444; border-radius: 50%; overflow: hidden; }
+    .wheel { width: 100%; height: 100%; position: absolute; transform-origin: center center; transition: transform 3s ease-out; }
+    .pointer { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid red; margin: 0 auto; margin-top: -20px; }
+    button { padding: 10px 20px; margin: 10px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 8px; font-size: 16px; }
+    button:disabled { background: #555; cursor: not-allowed; }
+    .balance { font-size: 20px; margin: 10px 0; }
+    .history { max-height: 150px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin: 20px auto; width: 90%; max-width: 400px; background: #222; border-radius: 10px; }
+    .celebration { font-size: 40px; color: gold; animation: pop 1s ease-out forwards; }
+    @keyframes pop {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎰 Mini Roulette 🎰</h1>
+  <div class="balance">Balance: <span id="balance">0</span> sats</div>
+  <div class="pointer"></div>
+  <div class="wheel-container">
+    <div class="wheel" id="wheel"></div>
+  </div>
+  <button onclick="spin()" id="spinBtn">Spin</button>
+  <button onclick="addBalance(1000)">Load +1000 sats</button>
+  <div id="result"></div>
+  <div class="history" id="history"></div>
+  <audio id="spinSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-slot-machine-spin-1939.mp3"></audio>
+  <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+
+  <script>
+    const balanceEl = document.getElementById('balance');
+    const wheelEl = document.getElementById('wheel');
+    const resultEl = document.getElementById('result');
+    const historyEl = document.getElementById('history');
+    const spinBtn = document.getElementById('spinBtn');
+    const spinSound = document.getElementById('spinSound');
+    const winSound = document.getElementById('winSound');
+
+    let balance = parseInt(localStorage.getItem('balance')) || 0;
+    balanceEl.textContent = balance;
+
+    function addBalance(amount) {
+      balance += amount;
+      updateBalance();
+    }
+
+    function updateBalance() {
+      balanceEl.textContent = balance;
+      localStorage.setItem('balance', balance);
+    }
+
+    function spin() {
+      if (balance < 100) {
+        alert("Insufficient balance (min 100 sats)");
+        return;
+      }
+
+      balance -= 100;
+      updateBalance();
+      spinBtn.disabled = true;
+
+      const degrees = Math.floor(3600 + Math.random() * 360);
+      wheelEl.style.transform = `rotate(${degrees}deg)`;
+
+      spinSound.play();
+
+      setTimeout(() => {
+        const number = Math.floor(1 + Math.random() * 10);
+        const color = Math.random() < 0.5 ? 'Red' : 'Black';
+        const isWin = Math.random() < 0.3;
+
+        if (isWin) {
+          balance += 250;
+          updateBalance();
+          resultEl.innerHTML = `<div class='celebration'>🎉 You won! +250 sats</div>`;
+          winSound.play();
+        } else {
+          resultEl.innerHTML = `<div>❌ Try again!</div>`;
+        }
+
+        const log = `🎯 Number: ${number} | 🎨 Color: ${color} | ${isWin ? '✅ Win' : '❌ Loss'}`;
+        historyEl.innerHTML = (log + '<br>' + historyEl.innerHTML).split('<br>').slice(0, 10).join('<br>');
+
+        spinBtn.disabled = false;
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
